@@ -1,26 +1,58 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
+
+  --shadow-soft: 0 10px 30px rgba(37, 99, 235, 0.08);
+  --radius-panel: 1.75rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: white;
+  color: rgb(30 41 59);
+}
+
+.brand-shadow {
+  box-shadow: var(--shadow-soft);
+}
+
+.brand-card {
+  box-shadow: var(--shadow-soft);
+}
+
+.hero-blob-left {
+  background: color-mix(in srgb, var(--color-brand-200) 40%, transparent);
+}
+
+.hero-blob-right {
+  background: color-mix(in srgb, rgb(186 230 253) 50%, transparent);
+}
+
+.hero-blob-bottom {
+  background: color-mix(in srgb, rgb(224 231 255) 60%, transparent);
+}
+
+.hero-grid {
+  background-image: radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.dark body {
+  background: rgb(2 6 23);
+  color: rgb(241 245 249);
 }

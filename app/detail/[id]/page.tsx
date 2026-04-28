@@ -1,79 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-
-type Product = {
-  id: number;
-  name: string;
-  short: string;
-  description: string;
-  price: number;
-  label: string;
-  status: string;
-  type: "app" | "source-code";
-  availability: "ready" | "custom";
-  tags: string[];
-  thumbnail: string;
-};
-
-const products: Product[] = [
-  {
-    id: 1,
-    name: "Starter SaaS Boilerplate",
-    short: "Boilerplate bisnis digital",
-    description:
-      "Template aplikasi untuk startup atau bisnis digital dengan halaman auth, dashboard, user management, dan struktur yang siap dikembangkan. Cocok untuk Anda yang ingin meluncurkan produk digital lebih cepat tanpa memulai dari nol.",
-    price: 2500000,
-    label: "Aplikasi",
-    status: "Ready",
-    type: "app",
-    availability: "ready",
-    tags: ["Auth", "Dashboard", "Scalable"],
-    thumbnail:
-      "https://images.unsplash.com/photo-1551650975-87deedd944c3?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: 2,
-    name: "E-Commerce Source Code",
-    short: "Codebase toko online",
-    description:
-      "Source code toko online modern dengan katalog produk, keranjang, checkout, dan manajemen pesanan. Tepat untuk bisnis yang ingin punya fondasi e-commerce yang cepat dan efisien untuk dikembangkan.",
-    price: 3500000,
-    label: "Source Code",
-    status: "Ready",
-    type: "source-code",
-    availability: "ready",
-    tags: ["E-Commerce", "Checkout", "CMS"],
-    thumbnail:
-      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: 3,
-    name: "Booking App for Services",
-    short: "Reservasi layanan online",
-    description:
-      "Aplikasi booking layanan yang cocok untuk agency, klinik, konsultasi, atau bisnis appointment based. Membantu calon customer melakukan reservasi dengan alur yang lebih rapi dan profesional.",
-    price: 4500000,
-    label: "Aplikasi",
-    status: "Customizable",
-    type: "app",
-    availability: "custom",
-    tags: ["Booking", "Calendar", "Form"],
-    thumbnail:
-      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80",
-  },
-];
-
-function formatPrice(value: number) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
-function getProductById(id: number) {
-  return products.find((item) => item.id === id) ?? null;
-}
+import { formatPrice, getProductById, products } from "../../lib/data";
 
 export function generateStaticParams() {
   return products.map((product) => ({
@@ -97,9 +24,7 @@ export function generateMetadata({ params }: { params: { id: string } }) {
   };
 }
 
-export default async function ProductDetailPage(
-  { params }: { params: Promise<{ id: string }> }
-) {
+export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params; // 🔥 ini kuncinya
 
   const id = Number(resolvedParams.id);
@@ -113,7 +38,6 @@ export default async function ProductDetailPage(
   if (!product) {
     notFound();
   }
-
 
   const whatsappHref = `https://wa.me/6281234567890?text=${encodeURIComponent(
     `Halo, saya tertarik dengan produk ${product.name}. Bisa jelaskan lebih detail?`,
@@ -155,13 +79,19 @@ export default async function ProductDetailPage(
             <div className="space-y-5">
               <div className="brand-card overflow-hidden rounded-[32px] border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
                 <div className="aspect-[16/10] overflow-hidden bg-slate-100 dark:bg-slate-800">
-                  <img src={product.thumbnail} alt={product.name} className="h-full w-full object-cover" />
+                  <img
+                    src={product.thumbnail}
+                    alt={product.name}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
               </div>
 
               <div className="brand-card rounded-[32px] border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
                 <h3 className="text-xl font-bold">Tentang produk ini</h3>
-                <p className="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300">{product.description}</p>
+                <p className="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                  {product.description}
+                </p>
 
                 <div className="mt-6 grid gap-4 sm:grid-cols-3">
                   <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800">
@@ -174,7 +104,9 @@ export default async function ProductDetailPage(
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800">
                     <p className="text-xs text-slate-400">Type</p>
-                    <p className="mt-2 font-semibold">{product.type === "source-code" ? "Source Code" : "Aplikasi"}</p>
+                    <p className="mt-2 font-semibold">
+                      {product.type === "source-code" ? "Source Code" : "Aplikasi"}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -196,7 +128,9 @@ export default async function ProductDetailPage(
 
                 <div className="mt-6">
                   <p className="text-xs uppercase tracking-wide text-slate-400">Harga mulai dari</p>
-                  <p className="mt-2 text-4xl font-bold text-brand-600">{formatPrice(product.price)}</p>
+                  <p className="mt-2 text-4xl font-bold text-brand-600">
+                    {formatPrice(product.price)}
+                  </p>
                 </div>
 
                 <div className="mt-6 flex flex-wrap gap-2">
@@ -267,7 +201,9 @@ export default async function ProductDetailPage(
         rel="noopener noreferrer"
         className="fixed bottom-5 right-5 z-50 flex items-center gap-3 rounded-full bg-[#25D366] px-4 py-3 text-sm font-semibold text-white shadow-2xl transition hover:scale-105 hover:bg-[#1ebe5d]"
       >
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-lg">✆</span>
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-lg">
+          ✆
+        </span>
         <span className="hidden sm:inline">Chat WhatsApp</span>
       </a>
     </div>

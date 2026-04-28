@@ -1,4 +1,4 @@
-/* @import "tailwindcss";
+@import "tailwindcss";
 
 @theme {
   --color-brand-50: #eff6ff;
@@ -55,4 +55,4 @@ body {
 .dark body {
   background: rgb(2 6 23);
   color: rgb(241 245 249);
-} */
+}

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   fetchProducts,
   fetchServices,
@@ -14,6 +15,7 @@ import {
   services as servicesList,
 } from "./lib/data";
 import Link from "next/link";
+import { useTheme } from "./theme-provider";
 
 function getSelfTests() {
   return [
@@ -44,9 +46,10 @@ function getSelfTests() {
   ];
 }
 
-export default function NextJsStorefrontPage() {
-  const [darkMode, setDarkMode] = useState(false);
-  const [mounted, setMounted] = useState(false);
+export default function HomeContent() {
+  const prefersReducedMotion = useReducedMotion();
+  const { theme, toggleTheme } = useTheme();
+  const darkMode = theme === "dark";
   const [mobileMenu, setMobileMenu] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -67,21 +70,6 @@ export default function NextJsStorefrontPage() {
   });
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const savedTheme = window.localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)")?.matches;
-    const isDark = savedTheme === "dark" || (!savedTheme && prefersDark);
-    setDarkMode(isDark);
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted || typeof window === "undefined") return;
-    document.documentElement.classList.toggle("dark", darkMode);
-    window.localStorage.setItem("theme", darkMode ? "dark" : "light");
-  }, [darkMode, mounted]);
-
-  useEffect(() => {
     const results = getSelfTests();
     results.forEach((test) => {
       const log = test.pass ? console.log : console.error;
@@ -98,6 +86,28 @@ export default function NextJsStorefrontPage() {
     () => filterServices(services, search, selectedCategory, selectedType),
     [services, search, selectedCategory, selectedType],
   );
+
+  const motionDistance = prefersReducedMotion ? 0 : 18;
+  const spring = { type: "spring" as const, stiffness: 120, damping: 18 };
+  const fadeUp = {
+    hidden: { opacity: 0, y: motionDistance },
+    show: { opacity: 1, y: 0 },
+  };
+  const subtleScale = prefersReducedMotion ? 1 : 0.97;
+  const cardMotion = {
+    hidden: { opacity: 0, y: motionDistance, scale: subtleScale },
+    show: { opacity: 1, y: 0, scale: 1 },
+    exit: { opacity: 0, y: prefersReducedMotion ? 0 : 8, scale: subtleScale },
+  };
+  const stagger = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: prefersReducedMotion ? 0 : 0.08,
+        delayChildren: prefersReducedMotion ? 0 : 0.08,
+      },
+    },
+  };
 
   return (
     <div className="min-h-screen bg-white text-slate-800 antialiased transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
@@ -141,11 +151,14 @@ export default function NextJsStorefrontPage() {
               Harga
             </a>
             <button
-              onClick={() => setDarkMode((prev) => !prev)}
+              onClick={toggleTheme}
+              aria-label={darkMode ? "Aktifkan mode terang" : "Aktifkan mode gelap"}
+              aria-pressed={darkMode}
+              suppressHydrationWarning
               className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium hover:border-brand-300 hover:text-brand-600 dark:border-slate-700"
               type="button"
             >
-              {darkMode ? "Light" : "Dark"}
+              <span suppressHydrationWarning>{darkMode ? "Light" : "Dark"}</span>
             </button>
             <a
               href="/login"
@@ -157,7 +170,10 @@ export default function NextJsStorefrontPage() {
 
           <div className="flex items-center gap-2 md:hidden">
             <button
-              onClick={() => setDarkMode((prev) => !prev)}
+              onClick={toggleTheme}
+              aria-label={darkMode ? "Aktifkan mode terang" : "Aktifkan mode gelap"}
+              aria-pressed={darkMode}
+              suppressHydrationWarning
               className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium dark:border-slate-700"
               type="button"
             >
@@ -173,46 +189,50 @@ export default function NextJsStorefrontPage() {
           </div>
         </div>
 
-        {mobileMenu && (
-          <div className="border-t border-slate-200 bg-white px-4 py-4 dark:border-slate-800 dark:bg-slate-950 md:hidden">
-            <div className="flex flex-col gap-3">
-              <a
-                onClick={() => setMobileMenu(false)}
-                href="#products"
-                className="text-sm font-medium"
+        <AnimatePresence initial={false}>
+          {mobileMenu && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: "easeOut" }}
+              className="overflow-hidden border-t border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-950 md:hidden"
+            >
+              <motion.div
+                variants={stagger}
+                initial="hidden"
+                animate="show"
+                className="flex flex-col gap-3 py-4"
               >
-                Produk
-              </a>
-              <a
-                onClick={() => setMobileMenu(false)}
-                href="#services"
-                className="text-sm font-medium"
-              >
-                Jasa
-              </a>
-              <a
-                onClick={() => setMobileMenu(false)}
-                href="#portfolio"
-                className="text-sm font-medium"
-              >
-                Portfolio
-              </a>
-              <a
-                onClick={() => setMobileMenu(false)}
-                href="#pricing"
-                className="text-sm font-medium"
-              >
-                Harga
-              </a>
-              <a
-                href="/login"
-                className="rounded-xl bg-brand-600 px-4 py-3 text-center text-sm font-semibold text-white"
-              >
-                Login Admin
-              </a>
-            </div>
-          </div>
-        )}
+                {[
+                  ["Produk", "#products"],
+                  ["Jasa", "#services"],
+                  ["Portfolio", "#portfolio"],
+                  ["Harga", "#pricing"],
+                ].map(([label, href]) => (
+                  <motion.a
+                    key={href}
+                    variants={fadeUp}
+                    transition={{ duration: 0.22, ease: "easeOut" }}
+                    onClick={() => setMobileMenu(false)}
+                    href={href}
+                    className="text-sm font-medium"
+                  >
+                    {label}
+                  </motion.a>
+                ))}
+                <motion.a
+                  variants={fadeUp}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                  href="/login"
+                  className="rounded-xl bg-brand-600 px-4 py-3 text-center text-sm font-semibold text-white"
+                >
+                  Login Admin
+                </motion.a>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       <main>
@@ -224,17 +244,34 @@ export default function NextJsStorefrontPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-brand-50 via-white to-white dark:from-slate-900 dark:via-slate-950 dark:to-slate-950" />
 
           <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-20">
-            <div className="flex flex-col justify-center">
-              <span className="mb-4 inline-flex w-fit items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-700 dark:border-brand-900/60 dark:bg-brand-900/30 dark:text-brand-300">
+            <motion.div
+              variants={stagger}
+              initial="hidden"
+              animate="show"
+              className="flex flex-col justify-center"
+            >
+              <motion.span
+                variants={fadeUp}
+                transition={spring}
+                className="mb-4 inline-flex w-fit items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-700 dark:border-brand-900/60 dark:bg-brand-900/30 dark:text-brand-300"
+              >
                 Website • Web App • Source Code • Custom Development{" "}
-              </span>
-              <h2 className="text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
+              </motion.span>
+              <motion.h2
+                variants={fadeUp}
+                transition={spring}
+                className="text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl"
+              >
                 Solusi digital untuk bisnis yang butuh website profesional, aplikasi custom, dan source code siap pakai.
-              </h2>
-              <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600 dark:text-slate-300 sm:text-base">
+              </motion.h2>
+              <motion.p
+                variants={fadeUp}
+                transition={spring}
+                className="mt-4 max-w-xl text-sm leading-7 text-slate-600 dark:text-slate-300 sm:text-base"
+              >
                 Mulai dari website company profile, landing page, dashboard internal, hingga aplikasi custom dan source code siap pakai. Dibangun dengan struktur yang rapi, modern, dan siap dikembangkan sesuai kebutuhan bisnis Anda.
-              </p>
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              </motion.p>
+              <motion.div variants={fadeUp} transition={spring} className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <a
                   href="#products"
                   className="brand-shadow rounded-2xl bg-brand-600 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-brand-700"
@@ -247,25 +284,30 @@ export default function NextJsStorefrontPage() {
                 >
                   Lihat Layanan
                 </a>
-              </div>
-              <div className="mt-8 grid grid-cols-3 gap-3">
-                <div className="brand-card rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+              </motion.div>
+              <motion.div variants={stagger} className="mt-8 grid grid-cols-3 gap-3">
+                <motion.div variants={cardMotion} transition={spring} className="brand-card rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                   <p className="text-2xl font-bold text-brand-600">{products.length}</p>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Produk Digital</p>
-                </div>
-                <div className="brand-card rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                </motion.div>
+                <motion.div variants={cardMotion} transition={spring} className="brand-card rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                   <p className="text-2xl font-bold text-brand-600">{services.length}</p>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Layanan</p>
-                </div>
-                <div className="brand-card rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                </motion.div>
+                <motion.div variants={cardMotion} transition={spring} className="brand-card rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                   <p className="text-2xl font-bold text-brand-600">24/7</p>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Project Support</p>
-                </div>
-              </div>
-            </div>
+                </motion.div>
+              </motion.div>
+            </motion.div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="brand-card rounded-3xl border border-brand-100 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:col-span-2">
+            <motion.div
+              variants={stagger}
+              initial="hidden"
+              animate="show"
+              className="grid gap-4 sm:grid-cols-2"
+            >
+              <motion.div variants={cardMotion} transition={spring} className="brand-card rounded-3xl border border-brand-100 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:col-span-2">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">
@@ -293,8 +335,8 @@ export default function NextJsStorefrontPage() {
                     API Ready
                   </div>
                 </div>
-              </div>
-              <div className="brand-card rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+              </motion.div>
+              <motion.div variants={cardMotion} transition={spring} className="brand-card rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
                 <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">
                   Admin
                 </p>
@@ -302,8 +344,8 @@ export default function NextJsStorefrontPage() {
                 <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                   Panel admin terpisah agar storefront tetap bersih dan fokus jualan.
                 </p>
-              </div>
-              <div className="brand-card rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+              </motion.div>
+              <motion.div variants={cardMotion} transition={spring} className="brand-card rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
                 <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">
                   Scalable
                 </p>
@@ -311,12 +353,19 @@ export default function NextJsStorefrontPage() {
                 <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                   Struktur data dibuat modular agar mudah dipindahkan ke REST API.
                 </p>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <motion.section
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.35 }}
+          variants={fadeUp}
+          transition={spring}
+          className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"
+        >
           <div className="brand-card rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
@@ -355,7 +404,7 @@ export default function NextJsStorefrontPage() {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         <section id="products" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="mb-6 flex items-end justify-between gap-4">
@@ -368,10 +417,17 @@ export default function NextJsStorefrontPage() {
             </span>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {filteredProducts.map((product) => (
-              <article
+          <motion.div layout className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            <AnimatePresence mode="popLayout">
+              {filteredProducts.map((product) => (
+              <motion.article
                 key={product.id}
+                layout
+                variants={cardMotion}
+                initial="hidden"
+                animate="show"
+                exit="exit"
+                transition={spring}
                 className="brand-card group overflow-hidden rounded-[30px] border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900"
               >
                 <a href={`/detail/${product.id}`} className="block">
@@ -434,9 +490,10 @@ export default function NextJsStorefrontPage() {
                     </Link>
                   </div>
                 </div>
-              </article>
-            ))}
-          </div>
+              </motion.article>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         </section>
 
         <section id="services" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -444,10 +501,17 @@ export default function NextJsStorefrontPage() {
             <p className="text-sm font-semibold text-brand-600">Layanan Developer</p>
             <h3 className="text-2xl font-bold">Jasa yang bisa Anda pesan</h3>
           </div>
-          <div className="grid gap-4 lg:grid-cols-3">
-            {filteredServices.map((service) => (
-              <div
+          <motion.div layout className="grid gap-4 lg:grid-cols-3">
+            <AnimatePresence mode="popLayout">
+              {filteredServices.map((service) => (
+              <motion.div
                 key={service.id}
+                layout
+                variants={cardMotion}
+                initial="hidden"
+                animate="show"
+                exit="exit"
+                transition={spring}
                 className="brand-card rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
               >
                 <div className="flex items-center justify-between gap-3">
@@ -481,21 +545,31 @@ export default function NextJsStorefrontPage() {
                     Pesan
                   </a>
                 </div>
-              </div>
-            ))}
-          </div>
+              </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         </section>
 
         <section id="portfolio" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="brand-card rounded-3xl border border-slate-200 bg-gradient-to-br from-brand-50 to-white p-6 dark:border-slate-800 dark:from-slate-900 dark:to-slate-950">
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.25 }}
+            variants={fadeUp}
+            transition={spring}
+            className="brand-card rounded-3xl border border-slate-200 bg-gradient-to-br from-brand-50 to-white p-6 dark:border-slate-800 dark:from-slate-900 dark:to-slate-950"
+          >
             <div className="mb-6">
               <p className="text-sm font-semibold text-brand-600">Portfolio</p>
               <h3 className="text-2xl font-bold">Contoh project yang pernah dibuat</h3>
             </div>
-            <div className="grid gap-4 md:grid-cols-3">
+            <motion.div variants={stagger} className="grid gap-4 md:grid-cols-3">
               {portfolio.map((item) => (
-                <div
+                <motion.div
                   key={item.id}
+                  variants={cardMotion}
+                  transition={spring}
                   className="brand-card rounded-3xl border border-white/70 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
                 >
                   <h4 className="text-lg font-bold">{item.name}</h4>
@@ -512,10 +586,10 @@ export default function NextJsStorefrontPage() {
                       </span>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </section>
 
         <section id="pricing" className="mx-auto max-w-7xl px-4 py-8 pb-16 sm:px-6 lg:px-8">
@@ -523,10 +597,18 @@ export default function NextJsStorefrontPage() {
             <p className="text-sm font-semibold text-brand-600">Paket Harga</p>
             <h3 className="text-2xl font-bold">Pilihan paket untuk bisnis Anda</h3>
           </div>
-          <div className="grid gap-4 lg:grid-cols-3">
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={stagger}
+            className="grid gap-4 lg:grid-cols-3"
+          >
             {plans.map((plan) => (
-              <div
+              <motion.div
                 key={plan.id}
+                variants={cardMotion}
+                transition={spring}
                 className={`brand-card rounded-3xl border bg-white p-6 dark:bg-slate-900 ${
                   plan.highlight
                     ? "border-brand-500 ring-2 ring-brand-200 dark:ring-brand-900/50"
@@ -563,9 +645,9 @@ export default function NextJsStorefrontPage() {
                 >
                   Pilih Paket
                 </a>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </section>
       </main>
 
@@ -576,7 +658,12 @@ export default function NextJsStorefrontPage() {
         </div>
       </footer>
 
-      <a
+      <motion.a
+        initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={prefersReducedMotion ? undefined : { y: -2, scale: 1.03 }}
+        whileTap={prefersReducedMotion ? undefined : { scale: 0.98 }}
+        transition={spring}
         href="https://wa.me/6281234567890?text=Halo%2C%20saya%20tertarik%20dengan%20produk%20dan%20jasa%20developer%20Anda"
         target="_blank"
         rel="noopener noreferrer"
@@ -586,7 +673,7 @@ export default function NextJsStorefrontPage() {
           ✆
         </span>
         <span className="hidden sm:inline">Chat WhatsApp</span>
-      </a>
+      </motion.a>
     </div>
   );
 }

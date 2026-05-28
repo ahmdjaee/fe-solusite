@@ -1,5 +1,5 @@
-import NextJsStorefrontPage from "./_content";
+import HomeContent from "./_content";
 
 export default function Home() {
-  return <NextJsStorefrontPage />;
+  return <HomeContent />;
 }

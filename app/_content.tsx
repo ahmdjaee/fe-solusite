@@ -135,13 +135,13 @@ export default function HomeContent({ initialData }: HomeContentProps) {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <a href="#home" className="flex items-center gap-3">
             <div className="brand-shadow flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-600 text-lg font-bold text-white">
-              D
+              S
             </div>
             <div>
               <p className="text-sm text-slate-500 dark:text-slate-400">{copy.brandEyebrow}</p>
-              <h1 className="hidden text-base font-semibold sm:block sm:text-lg">
+              <p className="hidden text-base font-semibold sm:block sm:text-lg">
                 {copy.brandTitle}
-              </h1>
+              </p>
             </div>
           </a>
 
@@ -270,13 +270,13 @@ export default function HomeContent({ initialData }: HomeContentProps) {
               >
                 {copy.heroBadge}{" "}
               </motion.span>
-              <motion.h2
+              <motion.h1
                 variants={fadeUp}
                 transition={spring}
                 className="text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl"
               >
                 {copy.heroTitle}
-              </motion.h2>
+              </motion.h1>
               <motion.p
                 variants={fadeUp}
                 transition={spring}
@@ -476,7 +476,7 @@ export default function HomeContent({ initialData }: HomeContentProps) {
                   <div className="relative aspect-[16/10] overflow-hidden bg-slate-100 dark:bg-slate-800">
                     <img
                       src={product.thumbnail}
-                      alt={product.name}
+                      alt={`Preview ${product.name} dari ${copy.brandEyebrow}`}
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-900/10 to-transparent" />

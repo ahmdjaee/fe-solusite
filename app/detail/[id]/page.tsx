@@ -1,14 +1,25 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatPrice, getProductPricing } from "../../lib/data";
 import { fetchServerProductById } from "../../lib/server-data";
 import { LanguageToggleButton, LocalizedText } from "../../localized-text";
 import { localizedText } from "../../lang";
+import {
+  buildProductJsonLd,
+  getSeoImageUrl,
+  safeJsonLd,
+  siteName,
+} from "../../lib/seo";
 
 export const dynamic = "force-dynamic";
 const detailCopy = localizedText.detail;
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
   const { id: productId } = await params;
   const id = Number(productId);
   const product = await fetchServerProductById(id);
@@ -16,12 +27,46 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!product) {
     return {
       title: "Produk tidak ditemukan",
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
   }
 
+  const canonical = `/detail/${product.id}`;
+  const image = getSeoImageUrl(product.thumbnail);
+  const title = product.name;
+  const socialTitle = `${product.name} | ${siteName}`;
+  const description = product.short || product.description;
+
   return {
-    title: `${product.name} | Detail Produk`,
-    description: product.short,
+    title,
+    description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      type: "website",
+      url: canonical,
+      title: socialTitle,
+      description,
+      siteName,
+      images: [
+        {
+          url: image,
+          width: 1200,
+          height: 630,
+          alt: `${product.name} - ${siteName}`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: socialTitle,
+      description,
+      images: [image],
+    },
   };
 }
 
@@ -41,6 +86,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   }
 
   const pricing = getProductPricing(product);
+  const jsonLd = buildProductJsonLd(product);
   const whatsappHref = `https://wa.me/6281234567890?text=${encodeURIComponent(
     `Halo, saya tertarik dengan produk ${product.name}${
       pricing.discount ? ` dengan promo ${pricing.discount.code}` : ""
@@ -49,17 +95,22 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="min-h-screen overflow-hidden bg-white text-slate-800 antialiased transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+      <script
+        id="product-json-ld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
+      />
       <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-3">
             <div className="brand-shadow flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-600 text-lg font-bold text-white">
-              D
+              S
             </div>
             <div>
               <p className="text-sm text-slate-500 dark:text-slate-400">Portofolio Pengembang</p>
-              <h1 className="text-base font-semibold sm:text-lg">
+              <p className="text-base font-semibold sm:text-lg">
                 <LocalizedText text={detailCopy.productDetail} />
-              </h1>
+              </p>
             </div>
           </Link>
 
@@ -88,7 +139,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                 <div className="aspect-[16/10] overflow-hidden bg-slate-100 dark:bg-slate-800">
                   <img
                     src={product.thumbnail}
-                    alt={product.name}
+                    alt={`Preview produk ${product.name} dari ${siteName}`}
                     className="h-full w-full object-cover"
                   />
                 </div>
@@ -151,7 +202,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                   )}
                 </div>
 
-                <h2 className="mt-4 text-3xl font-bold leading-tight">{product.name}</h2>
+                <h1 className="mt-4 text-3xl font-bold leading-tight">{product.name}</h1>
                 <p className="mt-3 text-base text-slate-500 dark:text-slate-400">{product.short}</p>
 
                 <div className="mt-6">

@@ -14,6 +14,7 @@ Isi `.env.local`:
 
 ```bash
 NEXT_PUBLIC_LARAVEL_API_BASE_URL=http://localhost:8000/api
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
 ## Integrasi API

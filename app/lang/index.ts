@@ -1,0 +1,44 @@
+import { common as enCommon } from "./en/common";
+import { detail as enDetail } from "./en/detail";
+import { landing as enLanding } from "./en/landing";
+import { common as idCommon } from "./id/common";
+import { detail as idDetail } from "./id/detail";
+import { landing as idLanding } from "./id/landing";
+import type { Language, LocalizedString } from "./config";
+
+export { defaultLanguage, isLanguage, languages } from "./config";
+export type { Language, LocalizedString } from "./config";
+
+export const translations = {
+  id: {
+    common: idCommon,
+    detail: idDetail,
+    landing: idLanding,
+  },
+  en: {
+    common: enCommon,
+    detail: enDetail,
+    landing: enLanding,
+  },
+} as const;
+
+function localizeSection<T extends Record<string, string>>(
+  id: T,
+  en: { [Key in keyof T]: string },
+) {
+  return (Object.keys(id) as Array<keyof T>).reduce(
+    (copy, key) => {
+      copy[key] = { id: id[key], en: en[key] };
+      return copy;
+    },
+    {} as { [Key in keyof T]: LocalizedString },
+  );
+}
+
+export function getTranslations(language: Language) {
+  return translations[language];
+}
+
+export const localizedText = {
+  detail: localizeSection(idDetail, enDetail),
+};

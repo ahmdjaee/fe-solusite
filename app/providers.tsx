@@ -3,13 +3,23 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useState } from "react";
 import { ThemeProvider } from "./theme-provider";
+import { LanguageProvider } from "./language-provider";
+import type { Language } from "./lang/config";
 
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({
+  children,
+  initialLanguage,
+}: {
+  children: ReactNode;
+  initialLanguage?: Language;
+}) {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>{children}</ThemeProvider>
+      <LanguageProvider initialLanguage={initialLanguage}>
+        <ThemeProvider>{children}</ThemeProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }

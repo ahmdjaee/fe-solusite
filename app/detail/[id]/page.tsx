@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { formatPrice, getProductById, products } from "../../lib/data";
+import { formatPrice, getProductPricing } from "../../lib/data";
+import { fetchServerProductById } from "../../lib/server-data";
+import { LanguageToggleButton, LocalizedText } from "../../localized-text";
+import { localizedText } from "../../lang";
 
-export function generateStaticParams() {
-  return products.map((product) => ({
-    id: String(product.id),
-  }));
-}
+export const dynamic = "force-dynamic";
+const detailCopy = localizedText.detail;
 
-export function generateMetadata({ params }: { params: { id: string } }) {
-  const id = Number(params.id);
-  const product = getProductById(id);
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id: productId } = await params;
+  const id = Number(productId);
+  const product = await fetchServerProductById(id);
 
   if (!product) {
     return {
@@ -19,7 +20,7 @@ export function generateMetadata({ params }: { params: { id: string } }) {
   }
 
   return {
-    title: `${product.name} | Product Detail`,
+    title: `${product.name} | Detail Produk`,
     description: product.short,
   };
 }
@@ -33,14 +34,17 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     notFound();
   }
 
-  const product = await getProductById(id);
+  const product = await fetchServerProductById(id);
 
   if (!product) {
     notFound();
   }
 
+  const pricing = getProductPricing(product);
   const whatsappHref = `https://wa.me/6281234567890?text=${encodeURIComponent(
-    `Halo, saya tertarik dengan produk ${product.name}. Bisa jelaskan lebih detail?`,
+    `Halo, saya tertarik dengan produk ${product.name}${
+      pricing.discount ? ` dengan promo ${pricing.discount.code}` : ""
+    }. Bisa jelaskan lebih detail?`,
   )}`;
 
   return (
@@ -52,17 +56,20 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               D
             </div>
             <div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Developer Portfolio</p>
-              <h1 className="text-base font-semibold sm:text-lg">Product Detail</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Portofolio Pengembang</p>
+              <h1 className="text-base font-semibold sm:text-lg">
+                <LocalizedText text={detailCopy.productDetail} />
+              </h1>
             </div>
           </Link>
 
           <div className="flex items-center gap-3">
+            <LanguageToggleButton />
             <Link
               href="/"
               className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium dark:border-slate-700"
             >
-              Kembali
+              <LocalizedText text={detailCopy.back} />
             </Link>
           </div>
         </div>
@@ -88,14 +95,18 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               </div>
 
               <div className="brand-card rounded-[32px] border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-                <h3 className="text-xl font-bold">Tentang produk ini</h3>
+                <h3 className="text-xl font-bold">
+                  <LocalizedText text={detailCopy.aboutProduct} />
+                </h3>
                 <p className="mt-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
                   {product.description}
                 </p>
 
                 <div className="mt-6 grid gap-4 sm:grid-cols-3">
                   <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800">
-                    <p className="text-xs text-slate-400">Kategori</p>
+                    <p className="text-xs text-slate-400">
+                      <LocalizedText text={detailCopy.category} />
+                    </p>
                     <p className="mt-2 font-semibold">{product.label}</p>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800">
@@ -103,9 +114,15 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                     <p className="mt-2 font-semibold">{product.status}</p>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800">
-                    <p className="text-xs text-slate-400">Type</p>
+                    <p className="text-xs text-slate-400">
+                      <LocalizedText text={detailCopy.type} />
+                    </p>
                     <p className="mt-2 font-semibold">
-                      {product.type === "source-code" ? "Source Code" : "Aplikasi"}
+                      {product.type === "source-code" ? (
+                        <LocalizedText text={detailCopy.sourceCode} />
+                      ) : (
+                        <LocalizedText text={detailCopy.app} />
+                      )}
                     </p>
                   </div>
                 </div>
@@ -121,16 +138,51 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                   <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
                     {product.status}
                   </span>
+                  {pricing.savings > 0 && (
+                    <span className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+                      {pricing.discount ? (
+                        <>
+                          <LocalizedText text={detailCopy.promo} /> {pricing.discount.code}
+                        </>
+                      ) : (
+                        <LocalizedText text={detailCopy.activePromo} />
+                      )}
+                    </span>
+                  )}
                 </div>
 
                 <h2 className="mt-4 text-3xl font-bold leading-tight">{product.name}</h2>
                 <p className="mt-3 text-base text-slate-500 dark:text-slate-400">{product.short}</p>
 
                 <div className="mt-6">
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Harga mulai dari</p>
-                  <p className="mt-2 text-4xl font-bold text-brand-600">
-                    {formatPrice(product.price)}
+                  <p className="text-xs uppercase tracking-wide text-slate-400">
+                    <LocalizedText text={detailCopy.startsFrom} />
                   </p>
+                  <div className="mt-2 flex flex-wrap items-end gap-x-3 gap-y-2">
+                    <p className="text-4xl font-bold text-brand-600">
+                      {formatPrice(pricing.finalPrice)}
+                    </p>
+                    {pricing.savings > 0 && (
+                      <p className="pb-1 text-base font-semibold text-slate-400 line-through">
+                        {formatPrice(pricing.originalPrice)}
+                      </p>
+                    )}
+                  </div>
+                  {pricing.savings > 0 && (
+                    <p className="mt-2 text-sm font-semibold text-rose-600 dark:text-rose-300">
+                      <LocalizedText text={detailCopy.save} />{" "}
+                      {formatPrice(pricing.savings)}
+                      {pricing.discount ? (
+                        <>
+                          {" "}
+                          <LocalizedText text={detailCopy.until} />{" "}
+                          {pricing.discount.endsAt}
+                        </>
+                      ) : (
+                        ""
+                      )}
+                    </p>
+                  )}
                 </div>
 
                 <div className="mt-6 flex flex-wrap gap-2">
@@ -151,35 +203,45 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                     rel="noopener noreferrer"
                     className="rounded-2xl bg-[#25D366] px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-[#1ebe5d]"
                   >
-                    Chat via WhatsApp
+                    <LocalizedText text={detailCopy.chatViaWhatsapp} />
                   </a>
                   <Link
                     href="/#products"
                     className="rounded-2xl border border-slate-200 px-5 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-600 dark:border-slate-700 dark:text-slate-200"
                   >
-                    Lihat produk lain
+                    <LocalizedText text={detailCopy.viewOtherProducts} />
                   </Link>
                 </div>
               </div>
 
               <div className="brand-card rounded-[32px] border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-                <h3 className="text-lg font-bold">Yang Anda dapatkan</h3>
+                <h3 className="text-lg font-bold">
+                  <LocalizedText text={detailCopy.whatYouGet} />
+                </h3>
                 <ul className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
                   <li className="flex gap-3">
                     <span className="text-brand-600">✓</span>
-                    <span>Source dan struktur project yang rapi.</span>
+                    <span>
+                      <LocalizedText text={detailCopy.cleanSource} />
+                    </span>
                   </li>
                   <li className="flex gap-3">
                     <span className="text-brand-600">✓</span>
-                    <span>Desain modern yang siap dikembangkan lebih lanjut.</span>
+                    <span>
+                      <LocalizedText text={detailCopy.modernDesign} />
+                    </span>
                   </li>
                   <li className="flex gap-3">
                     <span className="text-brand-600">✓</span>
-                    <span>Mudah diintegrasikan ke backend Laravel REST API.</span>
+                    <span>
+                      <LocalizedText text={detailCopy.laravelIntegration} />
+                    </span>
                   </li>
                   <li className="flex gap-3">
                     <span className="text-brand-600">✓</span>
-                    <span>Dukungan kustomisasi sesuai kebutuhan bisnis.</span>
+                    <span>
+                      <LocalizedText text={detailCopy.customizationSupport} />
+                    </span>
                   </li>
                 </ul>
               </div>
@@ -190,8 +252,12 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
       <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm text-slate-500 dark:text-slate-400 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-          <p>© 2026 Developer Store. Dibuat dengan Next.js + Tailwind CSS.</p>
-          <p>Halaman detail produk siap dihubungkan ke backend Laravel.</p>
+          <p>
+            <LocalizedText text={detailCopy.footerBrand} />
+          </p>
+          <p>
+            <LocalizedText text={detailCopy.footerBody} />
+          </p>
         </div>
       </footer>
 
@@ -204,7 +270,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-lg">
           ✆
         </span>
-        <span className="hidden sm:inline">Chat WhatsApp</span>
+        <span className="hidden sm:inline">
+          <LocalizedText text={detailCopy.whatsappChat} />
+        </span>
       </a>
     </div>
   );

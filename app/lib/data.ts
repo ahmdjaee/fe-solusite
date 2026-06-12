@@ -10,6 +10,7 @@ export type Product = {
   availability: "ready" | "custom";
   tags: string[];
   thumbnail: string;
+  thumbnailUrl: string;
   discountAmount?: number;
   finalPrice?: number;
 };
@@ -80,171 +81,6 @@ export type Plan = {
   highlight: boolean;
   features: string[];
 };
-
-export const products: Product[] = [
-  {
-    id: 1,
-    name: "Boilerplate SaaS Pemula",
-    short: "Boilerplate bisnis digital",
-    description:
-      "Template aplikasi untuk startup atau bisnis digital dengan halaman auth, dashboard, user management, dan struktur yang siap dikembangkan.",
-    price: 2500000,
-    label: "Aplikasi",
-    status: "Siap",
-    type: "app",
-    availability: "ready",
-    tags: ["Autentikasi", "Dasbor", "Skalabel"],
-    thumbnail:
-      "https://images.unsplash.com/photo-1551650975-87deedd944c3?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: 2,
-    name: "Kode Sumber Toko Online",
-    short: "Codebase toko online",
-    description:
-      "Source code toko online modern dengan katalog produk, keranjang, checkout, dan manajemen pesanan.",
-    price: 3500000,
-    label: "Kode Sumber",
-    status: "Siap",
-    type: "source-code",
-    availability: "ready",
-    tags: ["Toko Online", "Checkout", "CMS"],
-    thumbnail:
-      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: 3,
-    name: "Aplikasi Booking Layanan",
-    short: "Reservasi layanan online",
-    description:
-      "Aplikasi booking layanan yang cocok untuk agency, klinik, konsultasi, atau bisnis appointment based.",
-    price: 4500000,
-    label: "Aplikasi",
-    status: "Dapat Dikustomisasi",
-    type: "app",
-    availability: "custom",
-    tags: ["Booking", "Kalender", "Formulir"],
-    thumbnail:
-      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80",
-  },
-];
-
-export const discounts: Discount[] = [
-  {
-    id: 1,
-    productId: 1,
-    name: "Launch Promo",
-    code: "LAUNCH20",
-    type: "percentage",
-    value: 20,
-    startsAt: "2026-01-01",
-    endsAt: "2026-12-31",
-    isActive: true,
-  },
-  {
-    id: 2,
-    productId: 2,
-    name: "Promo Kode Sumber",
-    code: "CODE500K",
-    type: "fixed",
-    value: 500000,
-    startsAt: "2026-06-01",
-    endsAt: "2026-08-31",
-    isActive: true,
-  },
-  {
-    id: 3,
-    productId: 3,
-    name: "Akses Awal Aplikasi Booking",
-    code: "BOOKING15",
-    type: "percentage",
-    value: 15,
-    startsAt: "2026-07-01",
-    endsAt: "2026-09-30",
-    isActive: false,
-  },
-];
-
-export const services: Service[] = [
-  {
-    id: 1,
-    name: "Pengembangan Situs Web Kustom",
-    description:
-      "Pembuatan situs profil perusahaan, halaman awal, katalog, atau situs penjualan sesuai kebutuhan bisnis Anda.",
-    level: "Populer",
-    price: 5000000,
-    availability: "custom",
-    features: ["UI responsif", "SEO dasar", "Form kontak", "Bantuan deploy"],
-  },
-  {
-    id: 2,
-    name: "Pengembangan Aplikasi Web",
-    description:
-      "Pembuatan aplikasi berbasis web dengan fitur kustom seperti dasbor admin, pengaturan peran, dan integrasi sistem.",
-    level: "Lanjutan",
-    price: 12000000,
-    availability: "custom",
-    features: ["Dasbor", "Akses peran", "Integrasi API", "Dokumentasi"],
-  },
-  {
-    id: 3,
-    name: "Pemeliharaan & Dukungan",
-    description:
-      "Layanan maintenance bulanan untuk bug fixing, update kecil, monitoring, dan support teknis.",
-    level: "Bulanan",
-    price: 1500000,
-    availability: "custom",
-    features: ["Perbaikan bug", "Pembaruan kecil", "Pemantauan", "Dukungan teknis"],
-  },
-];
-
-export const portfolio: PortfolioItem[] = [
-  {
-    id: 1,
-    name: "Sistem Dasbor SDM",
-    description: "Dasbor internal untuk manajemen data karyawan, absensi, dan laporan.",
-    stack: ["Next.js", "Tailwind", "Laravel API"],
-  },
-  {
-    id: 2,
-    name: "Platform Booking Klinik",
-    description: "Sistem reservasi pasien dengan jadwal dokter dan admin panel lengkap.",
-    stack: ["Next.js", "MySQL", "REST API"],
-  },
-  {
-    id: 3,
-    name: "Situs Katalog Produk",
-    description: "Website katalog produk dengan filtering, inquiry form, dan manajemen item.",
-    stack: ["TypeScript", "Tailwind", "App Router"],
-  },
-];
-
-export const plans: Plan[] = [
-  {
-    id: 1,
-    name: "Dasar",
-    description: "Halaman awal atau situs profil sederhana.",
-    price: 3000000,
-    highlight: false,
-    features: ["Hingga 5 bagian", "Desain responsif", "Form kontak"],
-  },
-  {
-    id: 2,
-    name: "Profesional",
-    description: "Website bisnis dengan admin panel dasar.",
-    price: 7500000,
-    highlight: true,
-    features: ["Halaman multi bagian", "Panel admin", "Manajemen data", "Mode gelap"],
-  },
-  {
-    id: 3,
-    name: "Perusahaan",
-    description: "Aplikasi web kustom dengan integrasi backend.",
-    price: 15000000,
-    highlight: false,
-    features: ["Modul kustom", "Integrasi API", "Dokumentasi", "Dukungan deployment"],
-  },
-];
 
 export function formatPrice(value: number) {
   return new Intl.NumberFormat("id-ID", {
@@ -357,10 +193,6 @@ export function filterServices(
   });
 }
 
-export function getProductById(id: number) {
-  return products.find((item) => item.id === id) ?? null;
-}
-
 function toRecord(value: unknown): MaybeRecord {
   return value && typeof value === "object" ? (value as MaybeRecord) : {};
 }
@@ -427,6 +259,7 @@ export function normalizeProduct(value: unknown): Product {
     availability: toString(item.availability, "ready") as Product["availability"],
     tags: toStringArray(item.tags),
     thumbnail: toString(item.thumbnail),
+    thumbnailUrl: toString(item.thumbnail_url) || toString(item.thumbnail),
     discountAmount:
       item.discount_amount === null || item.discount_amount === undefined
         ? undefined

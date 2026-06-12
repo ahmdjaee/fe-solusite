@@ -475,7 +475,7 @@ export default function HomeContent({ initialData }: HomeContentProps) {
                 <a href={`/detail/${product.id}`} className="block">
                   <div className="relative aspect-[16/10] overflow-hidden bg-slate-100 dark:bg-slate-800">
                     <img
-                      src={product.thumbnail}
+                      src={product.thumbnailUrl}
                       alt={`Preview ${product.name} dari ${copy.brandEyebrow}`}
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     />

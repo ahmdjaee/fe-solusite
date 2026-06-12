@@ -10,7 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: now,
     changeFrequency: "weekly" as const,
     priority: 0.8,
-    images: [getSeoImageUrl(product.thumbnail)],
+    images: [getSeoImageUrl(product.thumbnailUrl)],
   }));
 
   return [

@@ -62,7 +62,7 @@ export function buildHomeJsonLd(data: LandingData) {
         "@type": "Product",
         name: product.name,
         description: product.short || product.description,
-        image: getSeoImageUrl(product.thumbnail),
+        image: getSeoImageUrl(product.thumbnailUrl),
         brand: {
           "@id": organizationId,
         },
@@ -143,7 +143,7 @@ export function buildProductJsonLd(product: Product) {
         "@type": "Product",
         name: product.name,
         description: product.description || product.short,
-        image: getSeoImageUrl(product.thumbnail),
+        image: getSeoImageUrl(product.thumbnailUrl),
         category: product.label,
         brand: {
           "@type": "Organization",

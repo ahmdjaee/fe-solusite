@@ -35,7 +35,7 @@ export async function generateMetadata({
   }
 
   const canonical = `/detail/${product.id}`;
-  const image = getSeoImageUrl(product.thumbnail);
+  const image = getSeoImageUrl(product.thumbnailUrl);
   const title = product.name;
   const socialTitle = `${product.name} | ${siteName}`;
   const description = product.short || product.description;
@@ -138,7 +138,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               <div className="brand-card overflow-hidden rounded-[32px] border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
                 <div className="aspect-[16/10] overflow-hidden bg-slate-100 dark:bg-slate-800">
                   <img
-                    src={product.thumbnail}
+                    src={product.thumbnailUrl}
                     alt={`Preview produk ${product.name} dari ${siteName}`}
                     className="h-full w-full object-cover"
                   />

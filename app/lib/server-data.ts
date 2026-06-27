@@ -1,11 +1,11 @@
+import { normalizeCategory, normalizeDiscount, normalizeProduct } from "./data";
+import type { Category, Discount, Product } from "./data";
 import {
-  normalizeDiscount,
-  normalizePlan,
-  normalizePortfolioItem,
-  normalizeProduct,
-  normalizeService,
-} from "./data";
-import type { Discount, Plan, PortfolioItem, Product, Service } from "./data";
+  findMockProduct,
+  mockCategories,
+  mockDiscounts,
+  mockProducts,
+} from "./mock-data";
 
 const DEFAULT_API_BASE_URL = "http://localhost:8000/api";
 
@@ -48,27 +48,22 @@ async function fetchServerCollection<T>(
 
 export type LandingData = {
   products: Product[];
-  services: Service[];
-  portfolio: PortfolioItem[];
-  plans: Plan[];
+  categories: Category[];
   discounts: Discount[];
 };
 
 export async function fetchLandingData(): Promise<LandingData> {
-  const [products, services, portfolio, plans, discounts] = await Promise.all([
+  const [products, categories, discounts] = await Promise.all([
     fetchServerCollection("products", normalizeProduct),
-    fetchServerCollection("services", normalizeService),
-    fetchServerCollection("portfolio", normalizePortfolioItem),
-    fetchServerCollection("plans", normalizePlan),
+    fetchServerCollection("categories", normalizeCategory),
     fetchServerCollection("discounts", normalizeDiscount),
   ]);
 
   return {
-    products,
-    services,
-    portfolio,
-    plans,
-    discounts,
+    // Fallback ke data dummy bila API belum mengembalikan data.
+    products: products.length > 0 ? products : mockProducts,
+    categories: categories.length > 0 ? categories : mockCategories,
+    discounts: discounts.length > 0 ? discounts : mockDiscounts,
   };
 }
 
@@ -77,5 +72,6 @@ export async function fetchServerProductById(id: number): Promise<Product | null
 
   if (json?.data) return normalizeProduct(json.data);
 
-  return null;
+  // Fallback ke produk dummy bila API belum tersedia.
+  return findMockProduct(id);
 }

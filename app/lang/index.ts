@@ -1,6 +1,8 @@
+import { about as enAbout } from "./en/about";
 import { common as enCommon } from "./en/common";
 import { detail as enDetail } from "./en/detail";
 import { landing as enLanding } from "./en/landing";
+import { about as idAbout } from "./id/about";
 import { common as idCommon } from "./id/common";
 import { detail as idDetail } from "./id/detail";
 import { landing as idLanding } from "./id/landing";
@@ -14,11 +16,13 @@ export const translations = {
     common: idCommon,
     detail: idDetail,
     landing: idLanding,
+    about: idAbout,
   },
   en: {
     common: enCommon,
     detail: enDetail,
     landing: enLanding,
+    about: enAbout,
   },
 } as const;
 

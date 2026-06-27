@@ -1,6 +1,6 @@
 import type { LandingData } from "./server-data";
 import type { Product } from "./data";
-import { formatPrice, getProductPricing } from "./data";
+import { formatPrice, getMarketingPricing } from "./data";
 
 export const siteName = "Solusite Studio";
 export const siteTitle = "Solusite Studio | Jasa Website, Aplikasi Web, dan Produk Digital";
@@ -18,7 +18,7 @@ export const siteKeywords = [
   "web developer Indonesia",
 ];
 
-export const businessEmail = "hello@solusite.studio";
+export const businessEmail = "hello@solusite.id";
 export const businessPhone = "+6281234567890";
 
 export function getSiteUrl() {
@@ -52,7 +52,7 @@ export function buildHomeJsonLd(data: LandingData) {
   const organizationId = `${siteUrl}/#organization`;
   const websiteId = `${siteUrl}/#website`;
   const productItems = data.products.slice(0, 12).map((product, index) => {
-    const pricing = getProductPricing(product, data.discounts);
+    const pricing = getMarketingPricing(product, data.discounts);
 
     return {
       "@type": "ListItem",
@@ -118,9 +118,8 @@ export function buildHomeJsonLd(data: LandingData) {
           "@type": "Country",
           name: "Indonesia",
         },
-        serviceType: data.services.map((service) => service.name),
-        priceRange: data.plans.length
-          ? `${formatPrice(Math.min(...data.plans.map((plan) => plan.price)))}+`
+        priceRange: data.products.length
+          ? `${formatPrice(Math.min(...data.products.map((product) => getMarketingPricing(product, data.discounts).finalPrice)))}+`
           : "Hubungi untuk estimasi",
       },
       {
@@ -133,7 +132,7 @@ export function buildHomeJsonLd(data: LandingData) {
 }
 
 export function buildProductJsonLd(product: Product) {
-  const pricing = getProductPricing(product);
+  const pricing = getMarketingPricing(product);
   const productUrl = absoluteUrl(`/detail/${product.id}`);
 
   return {

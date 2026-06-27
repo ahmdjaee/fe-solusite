@@ -1,5 +1,8 @@
+import { mockCategories, mockDiscounts, mockProducts } from "./mock-data";
+
 export type Product = {
   id: number;
+  categoryId?: number;
   name: string;
   short: string;
   description: string;
@@ -8,12 +11,53 @@ export type Product = {
   status: string;
   type: "app" | "source-code";
   availability: "ready" | "custom";
+  category: string;
   tags: string[];
   thumbnail: string;
   thumbnailUrl: string;
+  demoUrl?: string;
+  staticPrice?: number;
+  dynamicPrice?: number;
   discountAmount?: number;
   finalPrice?: number;
+  originalPrice?: number;
 };
+
+export type Category = {
+  id: number;
+  slug: string;
+  name: string;
+  description: string;
+  sortOrder: number;
+  isActive: boolean;
+};
+
+export const CMS_CATEGORY = "cms";
+export const OTHERS_CATEGORY = "others";
+
+// Harga paket pembelian default (dipakai bila API tidak mengirim static/dynamic_price).
+export const STATIC_PRICE = 500000;
+export const DYNAMIC_PRICE = 1989000;
+
+// Gambar placeholder (SVG inline) saat produk belum punya thumbnail dari API.
+export const PRODUCT_IMAGE_PLACEHOLDER =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='400'%3E%3Crect width='640' height='400' fill='%23e2e8f0'/%3E%3Ctext x='320' y='205' font-family='system-ui,sans-serif' font-size='28' font-weight='600' fill='%2394a3b8' text-anchor='middle'%3ESolusite Studio%3C/text%3E%3C/svg%3E";
+
+// Fallback: tebak kategori dari nama/label/tags bila API tidak mengirim `category`.
+export function deriveCategory(name: string, label: string, tags: string[]) {
+  const haystack = `${name} ${label} ${tags.join(" ")}`.toLowerCase();
+  if (haystack.includes("cms")) return CMS_CATEGORY;
+  return OTHERS_CATEGORY;
+}
+
+// Harga paket Statis / Dinamis per produk (pakai nilai API bila ada).
+export function getStaticPrice(product: Product) {
+  return product.staticPrice ?? STATIC_PRICE;
+}
+
+export function getDynamicPrice(product: Product) {
+  return product.dynamicPrice ?? DYNAMIC_PRICE;
+}
 
 export type DiscountType = "percentage" | "fixed";
 
@@ -56,32 +100,6 @@ function getPublicApiBaseUrl() {
   return process.env.NEXT_PUBLIC_LARAVEL_API_BASE_URL ?? DEFAULT_API_BASE_URL;
 }
 
-export type Service = {
-  id: number;
-  name: string;
-  description: string;
-  level: string;
-  price: number;
-  availability: "custom" | "ready";
-  features: string[];
-};
-
-export type PortfolioItem = {
-  id: number;
-  name: string;
-  description: string;
-  stack: string[];
-};
-
-export type Plan = {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  highlight: boolean;
-  features: string[];
-};
-
 export function formatPrice(value: number) {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -117,6 +135,62 @@ export function calculateDiscountedPrice(price: number, discount: Discount | nul
     discount.type === "percentage" ? Math.round(price * (discount.value / 100)) : discount.value;
 
   return Math.max(0, price - discountValue);
+}
+
+// Harga jual utama (final) yang ditampilkan di kartu/listing.
+// Pakai `final_price` dari server bila ada; jika tidak: CMS → paket Statis, lainnya → harga produk.
+export function getStartingPrice(product: Product): number {
+  if (typeof product.finalPrice === "number" && product.finalPrice >= 0) {
+    return product.finalPrice;
+  }
+  if (product.category === CMS_CATEGORY) return getStaticPrice(product);
+  return product.price;
+}
+
+export type MarketingPricing = {
+  finalPrice: number;
+  originalPrice: number;
+  savings: number;
+  discount: Discount | null;
+};
+
+// Diskon untuk marketing: harga final TETAP (sesuai ketentuan), diskon hanya
+// menampilkan "harga coret" yang lebih tinggi di atasnya agar terlihat hemat.
+export function applyMarketingDiscount(
+  finalPrice: number,
+  discount: Discount | null,
+): MarketingPricing {
+  if (!discount) {
+    return { finalPrice, originalPrice: finalPrice, savings: 0, discount: null };
+  }
+
+  const originalPrice =
+    discount.type === "percentage" && discount.value < 100
+      ? Math.round(finalPrice / (1 - discount.value / 100))
+      : finalPrice + discount.value;
+
+  return { finalPrice, originalPrice, savings: originalPrice - finalPrice, discount };
+}
+
+export function getMarketingPricing(
+  product: Product,
+  allDiscounts: Discount[] = [],
+  now = new Date(),
+): MarketingPricing {
+  const finalPrice = getStartingPrice(product);
+  const discount = getProductDiscount(product.id, allDiscounts, now);
+
+  // Pakai `original_price` dari server bila ada; jika tidak, hitung dari diskon aktif.
+  if (typeof product.originalPrice === "number" && product.originalPrice > finalPrice) {
+    return {
+      finalPrice,
+      originalPrice: product.originalPrice,
+      savings: product.originalPrice - finalPrice,
+      discount,
+    };
+  }
+
+  return applyMarketingDiscount(finalPrice, discount);
 }
 
 export function getProductPricing(
@@ -170,24 +244,6 @@ export function filterProducts(
       item.description.toLowerCase().includes(keyword) ||
       item.short.toLowerCase().includes(keyword);
     const matchCategory = category === "all" || item.type === category;
-    const matchType = availability === "all" || item.availability === availability;
-    return matchSearch && matchCategory && matchType;
-  });
-}
-
-export function filterServices(
-  items: Service[],
-  search: string,
-  category: string,
-  availability: string,
-) {
-  const keyword = search.trim().toLowerCase();
-  return items.filter((item) => {
-    const matchSearch =
-      !keyword ||
-      item.name.toLowerCase().includes(keyword) ||
-      item.description.toLowerCase().includes(keyword);
-    const matchCategory = category === "all" || category === "service";
     const matchType = availability === "all" || item.availability === availability;
     return matchSearch && matchCategory && matchType;
   });
@@ -247,65 +303,50 @@ async function fetchPublicCollection<T>(
 export function normalizeProduct(value: unknown): Product {
   const item = toRecord(value);
 
+  const name = toString(item.name);
+  const label = toString(item.label);
+  const tags = toStringArray(item.tags);
+  const category =
+    toString(item.category).trim().toLowerCase() || deriveCategory(name, label, tags);
+
+  const optionalNumber = (raw: unknown) =>
+    raw === null || raw === undefined ? undefined : toNumber(raw);
+
   return {
     id: toNumber(item.id),
-    name: toString(item.name),
+    categoryId: optionalNumber(item.category_id ?? item.categoryId),
+    name,
     short: toString(item.short),
     description: toString(item.description),
     price: toNumber(item.price),
-    label: toString(item.label),
+    label,
     status: toString(item.status),
     type: toString(item.type, "app") as Product["type"],
     availability: toString(item.availability, "ready") as Product["availability"],
-    tags: toStringArray(item.tags),
+    category,
+    tags,
+    demoUrl: toString(item.demo_url ?? item.demoUrl) || undefined,
     thumbnail: toString(item.thumbnail),
-    thumbnailUrl: toString(item.thumbnail_url) || toString(item.thumbnail),
-    discountAmount:
-      item.discount_amount === null || item.discount_amount === undefined
-        ? undefined
-        : toNumber(item.discount_amount),
-    finalPrice:
-      item.final_price === null || item.final_price === undefined
-        ? undefined
-        : toNumber(item.final_price),
+    thumbnailUrl:
+      toString(item.thumbnail_url) || toString(item.thumbnail) || PRODUCT_IMAGE_PLACEHOLDER,
+    staticPrice: optionalNumber(item.static_price ?? item.staticPrice),
+    dynamicPrice: optionalNumber(item.dynamic_price ?? item.dynamicPrice),
+    discountAmount: optionalNumber(item.discount_amount),
+    finalPrice: optionalNumber(item.final_price),
+    originalPrice: optionalNumber(item.original_price ?? item.originalPrice),
   };
 }
 
-export function normalizeService(value: unknown): Service {
+export function normalizeCategory(value: unknown): Category {
   const item = toRecord(value);
 
   return {
     id: toNumber(item.id),
+    slug: toString(item.slug).trim().toLowerCase(),
     name: toString(item.name),
     description: toString(item.description),
-    level: toString(item.level),
-    price: toNumber(item.price),
-    availability: toString(item.availability, "custom") as Service["availability"],
-    features: toStringArray(item.features),
-  };
-}
-
-export function normalizePortfolioItem(value: unknown): PortfolioItem {
-  const item = toRecord(value);
-
-  return {
-    id: toNumber(item.id),
-    name: toString(item.name),
-    description: toString(item.description),
-    stack: toStringArray(item.stack),
-  };
-}
-
-export function normalizePlan(value: unknown): Plan {
-  const item = toRecord(value);
-
-  return {
-    id: toNumber(item.id),
-    name: toString(item.name),
-    description: toString(item.description),
-    price: toNumber(item.price),
-    highlight: toBoolean(item.highlight),
-    features: toStringArray(item.features),
+    sortOrder: toNumber(item.sort_order ?? item.sortOrder),
+    isActive: toBoolean(item.is_active ?? item.isActive, true),
   };
 }
 
@@ -330,21 +371,28 @@ export function normalizeDiscount(value: unknown): Discount {
 }
 
 export async function fetchProducts() {
-  return fetchPublicCollection("products", normalizeProduct);
+  try {
+    const products = await fetchPublicCollection("products", normalizeProduct);
+    return products.length > 0 ? products : mockProducts;
+  } catch {
+    return mockProducts;
+  }
 }
 
-export async function fetchServices() {
-  return fetchPublicCollection("services", normalizeService);
-}
-
-export async function fetchPortfolio() {
-  return fetchPublicCollection("portfolio", normalizePortfolioItem);
-}
-
-export async function fetchPlans() {
-  return fetchPublicCollection("plans", normalizePlan);
+export async function fetchCategories() {
+  try {
+    const categories = await fetchPublicCollection("categories", normalizeCategory);
+    return categories.length > 0 ? categories : mockCategories;
+  } catch {
+    return mockCategories;
+  }
 }
 
 export async function fetchDiscounts() {
-  return fetchPublicCollection("discounts", normalizeDiscount);
+  try {
+    const discounts = await fetchPublicCollection("discounts", normalizeDiscount);
+    return discounts.length > 0 ? discounts : mockDiscounts;
+  } catch {
+    return mockDiscounts;
+  }
 }

@@ -1,27 +1,9 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import Script from "next/script";
 import "./globals.css";
 import { Providers } from "./providers";
 import { defaultLanguage, isLanguage, type Language } from "./lang/config";
 import { absoluteUrl, siteDescription, siteKeywords, siteName, siteTitle } from "./lib/seo";
-
-const themeScript = `
-(() => {
-  try {
-    const storedTheme = localStorage.getItem("theme");
-    const theme = storedTheme === "dark" || storedTheme === "light"
-      ? storedTheme
-      : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    document.documentElement.style.colorScheme = theme;
-  } catch {
-    document.documentElement.classList.remove("dark");
-    document.documentElement.style.colorScheme = "light";
-  }
-})();
-`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(absoluteUrl()),
@@ -96,18 +78,19 @@ export default async function RootLayout({
 }>) {
   const cookieStore = await cookies();
   const initialLanguage = getInitialLanguage(cookieStore.get("language")?.value);
+  const initialTheme = cookieStore.get("theme")?.value === "dark" ? "dark" : "light";
 
   return (
-    <html lang={initialLanguage} suppressHydrationWarning>
-      <head>
-        <Script
-          id="theme-init"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: themeScript }}
-        />
-      </head>
+    <html
+      lang={initialLanguage}
+      className={initialTheme === "dark" ? "dark" : undefined}
+      style={{ colorScheme: initialTheme }}
+      suppressHydrationWarning
+    >
       <body>
-        <Providers initialLanguage={initialLanguage}>{children}</Providers>
+        <Providers initialLanguage={initialLanguage} initialTheme={initialTheme}>
+          {children}
+        </Providers>
       </body>
     </html>
   );

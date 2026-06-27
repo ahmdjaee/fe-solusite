@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { formatPrice, getProductPricing } from "../../lib/data";
-import { fetchServerProductById } from "../../lib/server-data";
-import { LanguageToggleButton, LocalizedText } from "../../localized-text";
+import { fetchLandingData, fetchServerProductById } from "../../lib/server-data";
+import { formatPrice, getMarketingPricing, getProductDiscount } from "../../lib/data";
+import { PurchaseOptions } from "./purchase-options";
+import { LanguageToggleButton, LocalizedText, ThemeToggleButton } from "../../localized-text";
 import { localizedText } from "../../lang";
 import {
   buildProductJsonLd,
@@ -85,13 +86,14 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     notFound();
   }
 
-  const pricing = getProductPricing(product);
   const jsonLd = buildProductJsonLd(product);
-  const whatsappHref = `https://wa.me/6281234567890?text=${encodeURIComponent(
-    `Halo, saya tertarik dengan produk ${product.name}${
-      pricing.discount ? ` dengan promo ${pricing.discount.code}` : ""
-    }. Bisa jelaskan lebih detail?`,
-  )}`;
+
+  // Produk terkait: kategori yang sama, kecuali produk ini.
+  const { products: allProducts, discounts } = await fetchLandingData();
+  const related = allProducts
+    .filter((item) => item.category === product.category && item.id !== product.id)
+    .slice(0, 4);
+  const productDiscount = getProductDiscount(product.id, discounts);
 
   return (
     <div className="min-h-screen overflow-hidden bg-white text-slate-800 antialiased transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
@@ -107,7 +109,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               S
             </div>
             <div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Portofolio Pengembang</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Solusite Studio</p>
               <p className="text-base font-semibold sm:text-lg">
                 <LocalizedText text={detailCopy.productDetail} />
               </p>
@@ -115,6 +117,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </Link>
 
           <div className="flex items-center gap-3">
+            <ThemeToggleButton />
             <LanguageToggleButton />
             <Link
               href="/"
@@ -189,54 +192,12 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                   <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
                     {product.status}
                   </span>
-                  {pricing.savings > 0 && (
-                    <span className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
-                      {pricing.discount ? (
-                        <>
-                          <LocalizedText text={detailCopy.promo} /> {pricing.discount.code}
-                        </>
-                      ) : (
-                        <LocalizedText text={detailCopy.activePromo} />
-                      )}
-                    </span>
-                  )}
                 </div>
 
                 <h1 className="mt-4 text-3xl font-bold leading-tight">{product.name}</h1>
                 <p className="mt-3 text-base text-slate-500 dark:text-slate-400">{product.short}</p>
 
-                <div className="mt-6">
-                  <p className="text-xs uppercase tracking-wide text-slate-400">
-                    <LocalizedText text={detailCopy.startsFrom} />
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-end gap-x-3 gap-y-2">
-                    <p className="text-4xl font-bold text-brand-600">
-                      {formatPrice(pricing.finalPrice)}
-                    </p>
-                    {pricing.savings > 0 && (
-                      <p className="pb-1 text-base font-semibold text-slate-400 line-through">
-                        {formatPrice(pricing.originalPrice)}
-                      </p>
-                    )}
-                  </div>
-                  {pricing.savings > 0 && (
-                    <p className="mt-2 text-sm font-semibold text-rose-600 dark:text-rose-300">
-                      <LocalizedText text={detailCopy.save} />{" "}
-                      {formatPrice(pricing.savings)}
-                      {pricing.discount ? (
-                        <>
-                          {" "}
-                          <LocalizedText text={detailCopy.until} />{" "}
-                          {pricing.discount.endsAt}
-                        </>
-                      ) : (
-                        ""
-                      )}
-                    </p>
-                  )}
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-2">
+                <div className="mt-5 flex flex-wrap gap-2">
                   {product.tags.map((tag) => (
                     <span
                       key={tag}
@@ -247,58 +208,74 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                   ))}
                 </div>
 
-                <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                  <a
-                    href={whatsappHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-2xl bg-[#25D366] px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-[#1ebe5d]"
-                  >
-                    <LocalizedText text={detailCopy.chatViaWhatsapp} />
-                  </a>
-                  <Link
-                    href="/#products"
-                    className="rounded-2xl border border-slate-200 px-5 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-600 dark:border-slate-700 dark:text-slate-200"
-                  >
-                    <LocalizedText text={detailCopy.viewOtherProducts} />
-                  </Link>
+                <div className="mt-6 border-t border-slate-100 pt-6 dark:border-slate-800">
+                  <PurchaseOptions product={product} discount={productDiscount} />
                 </div>
-              </div>
-
-              <div className="brand-card rounded-[32px] border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-                <h3 className="text-lg font-bold">
-                  <LocalizedText text={detailCopy.whatYouGet} />
-                </h3>
-                <ul className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
-                  <li className="flex gap-3">
-                    <span className="text-brand-600">✓</span>
-                    <span>
-                      <LocalizedText text={detailCopy.cleanSource} />
-                    </span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-brand-600">✓</span>
-                    <span>
-                      <LocalizedText text={detailCopy.modernDesign} />
-                    </span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-brand-600">✓</span>
-                    <span>
-                      <LocalizedText text={detailCopy.laravelIntegration} />
-                    </span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-brand-600">✓</span>
-                    <span>
-                      <LocalizedText text={detailCopy.customizationSupport} />
-                    </span>
-                  </li>
-                </ul>
               </div>
             </div>
           </div>
         </section>
+
+        {related.length > 0 && (
+          <section className="relative mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+            <div className="mb-6">
+              <p className="text-sm font-semibold text-brand-600">
+                <LocalizedText text={detailCopy.relatedEyebrow} />
+              </p>
+              <h2 className="text-2xl font-bold">
+                <LocalizedText text={detailCopy.relatedTitle} />
+              </h2>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {related.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/detail/${item.id}`}
+                  className="brand-card group flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900"
+                >
+                  <div className="relative aspect-[16/10] overflow-hidden bg-slate-100 dark:bg-slate-800">
+                    <img
+                      src={item.thumbnailUrl}
+                      alt={`Preview ${item.name}`}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    />
+                    {item.label && (
+                      <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-slate-800 backdrop-blur">
+                        {item.label}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col p-4">
+                    <h3 className="line-clamp-1 text-base font-bold">{item.name}</h3>
+                    <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                      {item.short}
+                    </p>
+                    {(() => {
+                      const itemPricing = getMarketingPricing(item, discounts);
+                      return (
+                        <div className="mt-auto pt-3">
+                          <p className="text-[11px] uppercase tracking-wide text-slate-400">
+                            <LocalizedText text={detailCopy.startsFrom} />
+                          </p>
+                          <div className="flex flex-wrap items-baseline gap-x-2">
+                            <p className="text-lg font-bold text-brand-600">
+                              {formatPrice(itemPricing.finalPrice)}
+                            </p>
+                            {itemPricing.savings > 0 && (
+                              <p className="text-xs font-semibold text-slate-400 line-through">
+                                {formatPrice(itemPricing.originalPrice)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
 
       <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">

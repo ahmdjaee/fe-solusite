@@ -11,6 +11,7 @@ type ThemeContextValue = {
 };
 
 const THEME_STORAGE_KEY = "theme";
+const THEME_COOKIE_KEY = "theme";
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function isTheme(value: string | null): value is Theme {
@@ -21,11 +22,8 @@ function getSystemTheme(): Theme {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "light";
-
-  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-  return isTheme(storedTheme) ? storedTheme : getSystemTheme();
+function writeThemeCookie(theme: Theme) {
+  document.cookie = `${THEME_COOKIE_KEY}=${theme}; path=/; max-age=31536000; samesite=lax`;
 }
 
 function applyTheme(theme: Theme) {
@@ -33,12 +31,28 @@ function applyTheme(theme: Theme) {
   document.documentElement.style.colorScheme = theme;
 }
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+export function ThemeProvider({
+  children,
+  initialTheme = "light",
+}: {
+  children: ReactNode;
+  initialTheme?: Theme;
+}) {
+  // initialTheme berasal dari cookie (dibaca server) agar tidak ada flash bagi
+  // pengunjung yang pernah memilih tema.
+  const [theme, setThemeState] = useState<Theme>(initialTheme);
+
+  // Saat pertama di klien: selaraskan dengan preferensi tersimpan / sistem
+  // (penting untuk kunjungan pertama yang belum punya cookie).
+  useEffect(() => {
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    setThemeState(isTheme(stored) ? stored : getSystemTheme());
+  }, []);
 
   useEffect(() => {
     applyTheme(theme);
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    writeThemeCookie(theme);
   }, [theme]);
 
   useEffect(() => {

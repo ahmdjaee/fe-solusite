@@ -9,16 +9,18 @@ import type { Language } from "./lang/config";
 export function Providers({
   children,
   initialLanguage,
+  initialTheme,
 }: {
   children: ReactNode;
   initialLanguage?: Language;
+  initialTheme?: "light" | "dark";
 }) {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider initialLanguage={initialLanguage}>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider initialTheme={initialTheme}>{children}</ThemeProvider>
       </LanguageProvider>
     </QueryClientProvider>
   );

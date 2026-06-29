@@ -9,8 +9,44 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      NEXT_PUBLIC_LARAVEL_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_LARAVEL_API_BASE_URL }}
+
     steps:
-      - name: Deploy via SSH
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js
+        run: npm run build
+
+      - name: Prepare standalone release
+        run: |
+          mkdir -p release/.next
+          cp -R .next/standalone/. release/
+          cp -R .next/static release/.next/static
+          cp -R public release/public
+          tar -czf release.tar.gz -C release .
+
+      - name: Upload release to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          source: release.tar.gz
+          target: /tmp
+
+      - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -19,13 +55,30 @@ jobs:
           port: ${{ secrets.VPS_PORT }}
           command_timeout: 30m
           script: |
-
+            set -e
             export PATH="/home/deploy/.nvm/versions/node/v24.15.0/bin:$PATH"
 
-            cd /var/www/frontend/fe-portfolio-product
-            git fetch origin main
-            git reset --hard origin/main
-            npm install
-            npm run build
-            pm2 restart fe-portfolio-product
+            APP_DIR="/var/www/frontend/fe-portfolio-product"
+            RELEASE_DIR="${APP_DIR}.release"
+            PREVIOUS_DIR="${APP_DIR}.previous"
+
+            rm -rf "$RELEASE_DIR"
+            mkdir -p "$RELEASE_DIR"
+            tar -xzf /tmp/release.tar.gz -C "$RELEASE_DIR"
+
+            if [ -f "$APP_DIR/.env.local" ]; then
+              cp "$APP_DIR/.env.local" "$RELEASE_DIR/.env.local"
+            fi
+
+            rm -rf "$PREVIOUS_DIR"
+            if [ -d "$APP_DIR" ]; then
+              mv "$APP_DIR" "$PREVIOUS_DIR"
+            fi
+
+            mv "$RELEASE_DIR" "$APP_DIR"
+            cd "$APP_DIR"
+
+            pm2 delete fe-portfolio-product || true
+            pm2 start server.js --name fe-portfolio-product
             pm2 save
+            rm -rf "$PREVIOUS_DIR"

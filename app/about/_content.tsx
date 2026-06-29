@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useLanguage } from "../language-provider";
+import { useSettings } from "../settings-provider";
+import { buildWhatsappHref } from "../lib/data";
 import { getTranslations } from "../lang";
 import { SiteHeader } from "../site-header";
 
@@ -70,6 +72,7 @@ function TagIcon() {
 
 export default function AboutContent() {
   const { language } = useLanguage();
+  const settings = useSettings();
   const t = getTranslations(language);
   const a = t.about;
   const l = t.landing;
@@ -258,7 +261,7 @@ export default function AboutContent() {
               </p>
               <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <a
-                  href="https://wa.me/6281234567890"
+                  href={buildWhatsappHref(settings)}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex w-full items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-200 sm:w-auto"

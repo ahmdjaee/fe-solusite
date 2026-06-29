@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { Providers } from "./providers";
+import { fetchServerSettings } from "./lib/server-data";
 import { defaultLanguage, isLanguage, type Language } from "./lang/config";
 import { absoluteUrl, siteDescription, siteKeywords, siteName, siteTitle } from "./lib/seo";
 
@@ -79,6 +80,7 @@ export default async function RootLayout({
   const cookieStore = await cookies();
   const initialLanguage = getInitialLanguage(cookieStore.get("language")?.value);
   const initialTheme = cookieStore.get("theme")?.value === "dark" ? "dark" : "light";
+  const settings = await fetchServerSettings();
 
   return (
     <html
@@ -88,7 +90,11 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body>
-        <Providers initialLanguage={initialLanguage} initialTheme={initialTheme}>
+        <Providers
+          initialLanguage={initialLanguage}
+          initialTheme={initialTheme}
+          settings={settings}
+        >
           {children}
         </Providers>
       </body>

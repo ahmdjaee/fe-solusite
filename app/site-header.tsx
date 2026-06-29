@@ -4,12 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useLanguage } from "./language-provider";
+import { useSettings } from "./settings-provider";
 import { LanguageToggleButton, ThemeToggleButton } from "./localized-text";
 import { getTranslations } from "./lang";
 
 export function SiteHeader() {
   const prefersReducedMotion = useReducedMotion();
   const { language } = useLanguage();
+  const settings = useSettings();
   const copy = getTranslations(language).landing;
   const [mobileMenu, setMobileMenu] = useState(false);
 
@@ -37,12 +39,24 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-3">
-          <div className="brand-shadow flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-600 text-lg font-bold text-white">
-            S
-          </div>
+          {settings.logoUrl ? (
+            <img
+              src={settings.logoUrl}
+              alt={settings.siteName}
+              className="h-10 w-10 rounded-2xl object-cover"
+            />
+          ) : (
+            <div className="brand-shadow flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-600 text-lg font-bold text-white">
+              {settings.siteName.charAt(0) || "S"}
+            </div>
+          )}
           <div>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{copy.brandEyebrow}</p>
-            <p className="hidden text-base font-semibold sm:block sm:text-lg">{copy.brandTitle}</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+              {settings.siteName}
+            </p>
+            <p className="hidden text-xs text-slate-500 dark:text-slate-400 sm:block">
+              {settings.tagline}
+            </p>
           </div>
         </Link>
 

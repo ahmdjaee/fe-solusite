@@ -1,4 +1,4 @@
-import { mockCategories, mockDiscounts, mockProducts } from "./mock-data";
+import { mockCategories, mockDiscounts, mockProducts, mockSettings } from "./mock-data";
 
 export type Product = {
   id: number;
@@ -31,6 +31,27 @@ export type Category = {
   sortOrder: number;
   isActive: boolean;
 };
+
+export type Settings = {
+  siteName: string;
+  tagline: string;
+  logoUrl: string | null;
+  whatsappNumber: string;
+  whatsappMessage: string;
+  email: string;
+  phone: string;
+  address: string;
+  instagramUrl: string;
+  facebookUrl: string;
+  tiktokUrl: string;
+  youtubeUrl: string;
+};
+
+// Bangun link CTA WhatsApp dari settings (pesan opsional menimpa pesan default).
+export function buildWhatsappHref(settings: Settings, message?: string) {
+  const text = encodeURIComponent(message ?? settings.whatsappMessage);
+  return `https://wa.me/${settings.whatsappNumber}?text=${text}`;
+}
 
 export const CMS_CATEGORY = "cms";
 export const OTHERS_CATEGORY = "others";
@@ -347,6 +368,29 @@ export function normalizeCategory(value: unknown): Category {
     description: toString(item.description),
     sortOrder: toNumber(item.sort_order ?? item.sortOrder),
     isActive: toBoolean(item.is_active ?? item.isActive, true),
+  };
+}
+
+export function normalizeSettings(value: unknown): Settings {
+  const item = toRecord(value);
+  const str = (raw: unknown, fallback: string) => toString(raw) || fallback;
+
+  return {
+    siteName: str(item.site_name ?? item.siteName, mockSettings.siteName),
+    tagline: str(item.tagline, mockSettings.tagline),
+    logoUrl: toString(item.logo_url ?? item.logoUrl) || null,
+    whatsappNumber: str(item.whatsapp_number ?? item.whatsappNumber, mockSettings.whatsappNumber),
+    whatsappMessage: str(
+      item.whatsapp_message ?? item.whatsappMessage,
+      mockSettings.whatsappMessage,
+    ),
+    email: str(item.email, mockSettings.email),
+    phone: str(item.phone, mockSettings.phone),
+    address: str(item.address, mockSettings.address),
+    instagramUrl: toString(item.instagram_url ?? item.instagramUrl),
+    facebookUrl: toString(item.facebook_url ?? item.facebookUrl),
+    tiktokUrl: toString(item.tiktok_url ?? item.tiktokUrl),
+    youtubeUrl: toString(item.youtube_url ?? item.youtubeUrl),
   };
 }
 

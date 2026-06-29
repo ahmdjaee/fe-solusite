@@ -1,8 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { fetchLandingData, fetchServerProductById } from "../../lib/server-data";
-import { formatPrice, getMarketingPricing, getProductDiscount } from "../../lib/data";
+import {
+  fetchLandingData,
+  fetchServerProductById,
+  fetchServerSettings,
+} from "../../lib/server-data";
+import {
+  buildWhatsappHref,
+  formatPrice,
+  getMarketingPricing,
+  getProductDiscount,
+} from "../../lib/data";
 import { PurchaseOptions } from "./purchase-options";
 import { LanguageToggleButton, LocalizedText, ThemeToggleButton } from "../../localized-text";
 import { localizedText } from "../../lang";
@@ -88,6 +97,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   const jsonLd = buildProductJsonLd(product);
 
+  const settings = await fetchServerSettings();
+
   // Produk terkait: kategori yang sama, kecuali produk ini.
   const { products: allProducts, discounts } = await fetchLandingData();
   const related = allProducts
@@ -105,11 +116,19 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-3">
-            <div className="brand-shadow flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-600 text-lg font-bold text-white">
-              S
-            </div>
+            {settings.logoUrl ? (
+              <img
+                src={settings.logoUrl}
+                alt={settings.siteName}
+                className="h-10 w-10 rounded-2xl object-cover"
+              />
+            ) : (
+              <div className="brand-shadow flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-600 text-lg font-bold text-white">
+                {settings.siteName.charAt(0) || "S"}
+              </div>
+            )}
             <div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Solusite Studio</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{settings.siteName}</p>
               <p className="text-base font-semibold sm:text-lg">
                 <LocalizedText text={detailCopy.productDetail} />
               </p>
@@ -290,7 +309,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       </footer>
 
       <a
-        href="https://wa.me/6281234567890?text=Halo%2C%20saya%20ingin%20konsultasi%20produk%20digital"
+        href={buildWhatsappHref(settings)}
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-5 right-5 z-50 flex items-center gap-3 rounded-full bg-[#25D366] px-4 py-3 text-sm font-semibold text-white shadow-2xl transition hover:scale-105 hover:bg-[#1ebe5d]"

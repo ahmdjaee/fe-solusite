@@ -8,12 +8,14 @@ import {
   fetchCategories,
   formatPrice,
   getMarketingPricing,
+  buildWhatsappHref,
   CMS_CATEGORY,
 } from "./lib/data";
 import type { Category, Discount, Product } from "./lib/data";
 import Link from "next/link";
 import type { LandingData } from "./lib/server-data";
 import { useLanguage } from "./language-provider";
+import { useSettings } from "./settings-provider";
 import { SiteHeader } from "./site-header";
 import { getTranslations } from "./lang";
 
@@ -193,6 +195,7 @@ function CategoryRow({
 export default function HomeContent({ initialData }: HomeContentProps) {
   const prefersReducedMotion = useReducedMotion();
   const { language } = useLanguage();
+  const settings = useSettings();
   const copy = getTranslations(language).landing;
 
   const {
@@ -563,7 +566,7 @@ export default function HomeContent({ initialData }: HomeContentProps) {
               </div>
               <div className="flex w-full flex-col gap-3 lg:ml-auto lg:max-w-xs">
                 <a
-                  href="https://wa.me/6281234567890"
+                  href={buildWhatsappHref(settings)}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex w-full items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-200"
@@ -571,7 +574,7 @@ export default function HomeContent({ initialData }: HomeContentProps) {
                   {copy.ctaPrimary}
                 </a>
                 <a
-                  href="mailto:ahmadjaelani8685@gmail.com"
+                  href={`mailto:${settings.email}`}
                   className="inline-flex w-full items-center justify-center rounded-xl border border-slate-700 px-6 py-3.5 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-900"
                 >
                   {copy.ctaSecondary}
@@ -596,7 +599,7 @@ export default function HomeContent({ initialData }: HomeContentProps) {
         whileHover={prefersReducedMotion ? undefined : { y: -2, scale: 1.03 }}
         whileTap={prefersReducedMotion ? undefined : { scale: 0.98 }}
         transition={spring}
-        href="https://wa.me/6281234567890?text=Halo%2C%20saya%20tertarik%20dengan%20produk%20Anda"
+        href={buildWhatsappHref(settings)}
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-5 right-5 z-50 flex items-center gap-3 rounded-full bg-[#25D366] px-4 py-3 text-sm font-semibold text-white shadow-2xl transition hover:scale-105 hover:bg-[#1ebe5d]"

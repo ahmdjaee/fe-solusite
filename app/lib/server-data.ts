@@ -1,10 +1,16 @@
-import { normalizeCategory, normalizeDiscount, normalizeProduct } from "./data";
-import type { Category, Discount, Product } from "./data";
+import {
+  normalizeCategory,
+  normalizeDiscount,
+  normalizeProduct,
+  normalizeSettings,
+} from "./data";
+import type { Category, Discount, Product, Settings } from "./data";
 import {
   findMockProduct,
   mockCategories,
   mockDiscounts,
   mockProducts,
+  mockSettings,
 } from "./mock-data";
 
 const DEFAULT_API_BASE_URL = "http://localhost:8000/api";
@@ -65,6 +71,14 @@ export async function fetchLandingData(): Promise<LandingData> {
     categories: categories.length > 0 ? categories : mockCategories,
     discounts: discounts.length > 0 ? discounts : mockDiscounts,
   };
+}
+
+export async function fetchServerSettings(): Promise<Settings> {
+  const json = (await fetchLaravel("/settings")) as LaravelResource | null;
+
+  if (json?.data) return normalizeSettings(json.data);
+
+  return mockSettings;
 }
 
 export async function fetchServerProductById(id: number): Promise<Product | null> {

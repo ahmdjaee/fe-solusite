@@ -1,4 +1,4 @@
-import type { Category, Discount, Product } from "./data";
+import type { Category, Discount, Product, Settings } from "./data";
 
 // Disamakan dengan CMS_CATEGORY / OTHERS_CATEGORY di ./data.
 // Pakai literal di sini agar tidak terjadi circular import nilai.
@@ -273,6 +273,21 @@ export const mockCategories: Category[] = [
     isActive: true,
   },
 ];
+
+export const mockSettings: Settings = {
+  siteName: "Solusite Studio",
+  tagline: "Website & aplikasi siap pakai untuk bisnis Anda.",
+  logoUrl: null,
+  whatsappNumber: "6281234567890",
+  whatsappMessage: "Halo Solusite, saya tertarik dengan produk Anda.",
+  email: "hello@solusite.studio",
+  phone: "+62 812-3456-7890",
+  address: "Jakarta, Indonesia",
+  instagramUrl: "https://instagram.com/solusite.studio",
+  facebookUrl: "",
+  tiktokUrl: "",
+  youtubeUrl: "",
+};
 
 export function findMockProduct(id: number) {
   return mockProducts.find((product) => product.id === id) ?? null;

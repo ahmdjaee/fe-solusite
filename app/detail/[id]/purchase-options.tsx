@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "../../language-provider";
+import { useSettings } from "../../settings-provider";
 import { translations } from "../../lang";
 import {
   CMS_CATEGORY,
   applyMarketingDiscount,
+  buildWhatsappHref,
   formatPrice,
   getDynamicPrice,
   getStartingPrice,
@@ -24,6 +26,7 @@ export function PurchaseOptions({
   discount?: Discount | null;
 }) {
   const { language } = useLanguage();
+  const settings = useSettings();
   const copy = translations[language].detail;
   const isCms = product.category === CMS_CATEGORY;
   const [selected, setSelected] = useState<PackageId>("dynamic");
@@ -57,9 +60,10 @@ export function PurchaseOptions({
   const orderPrice = isCms ? active.price : getStartingPrice(product);
   const orderLabel = isCms ? `${product.name} — paket ${active.name}` : product.name;
 
-  const whatsappHref = `https://wa.me/6281234567890?text=${encodeURIComponent(
+  const whatsappHref = buildWhatsappHref(
+    settings,
     `Halo, saya tertarik dengan produk ${orderLabel} (${formatPrice(orderPrice)}). Bisa dibantu?`,
-  )}`;
+  );
 
   return (
     <div>

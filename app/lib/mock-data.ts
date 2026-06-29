@@ -287,6 +287,13 @@ export const mockSettings: Settings = {
   facebookUrl: "",
   tiktokUrl: "",
   youtubeUrl: "",
+  metaTitle: "Solusite Studio — Website & Aplikasi Siap Pakai",
+  metaDescription:
+    "Solusite Studio menyediakan CMS dan aplikasi bisnis siap pakai yang mudah dikelola sendiri tanpa coding.",
+  metaKeywords: "cms, website, aplikasi bisnis, toko online, solusite",
+  ogImageUrl: null,
+  googleAnalyticsId: "",
+  googleSiteVerification: "",
 };
 
 export function findMockProduct(id: number) {

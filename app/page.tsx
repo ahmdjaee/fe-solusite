@@ -1,19 +1,23 @@
 import type { Metadata } from "next";
 import HomeContent from "./_content";
-import { fetchLandingData } from "./lib/server-data";
+import { fetchLandingData, fetchServerSettings } from "./lib/server-data";
 import { buildHomeJsonLd, safeJsonLd, siteDescription, siteTitle } from "./lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: {
-    absolute: siteTitle,
-  },
-  description: siteDescription,
-  alternates: {
-    canonical: "/",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await fetchServerSettings();
+
+  return {
+    title: {
+      absolute: settings.metaTitle || siteTitle,
+    },
+    description: settings.metaDescription || siteDescription,
+    alternates: {
+      canonical: "/",
+    },
+  };
+}
 
 export default async function Home() {
   const initialData = await fetchLandingData();

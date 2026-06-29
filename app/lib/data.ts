@@ -45,6 +45,12 @@ export type Settings = {
   facebookUrl: string;
   tiktokUrl: string;
   youtubeUrl: string;
+  metaTitle: string;
+  metaDescription: string;
+  metaKeywords: string;
+  ogImageUrl: string | null;
+  googleAnalyticsId: string;
+  googleSiteVerification: string;
 };
 
 // Bangun link CTA WhatsApp dari settings (pesan opsional menimpa pesan default).
@@ -391,6 +397,17 @@ export function normalizeSettings(value: unknown): Settings {
     facebookUrl: toString(item.facebook_url ?? item.facebookUrl),
     tiktokUrl: toString(item.tiktok_url ?? item.tiktokUrl),
     youtubeUrl: toString(item.youtube_url ?? item.youtubeUrl),
+    metaTitle: str(item.meta_title ?? item.metaTitle, mockSettings.metaTitle),
+    metaDescription: str(
+      item.meta_description ?? item.metaDescription,
+      mockSettings.metaDescription,
+    ),
+    metaKeywords: str(item.meta_keywords ?? item.metaKeywords, mockSettings.metaKeywords),
+    ogImageUrl: toString(item.og_image_url ?? item.ogImageUrl) || null,
+    googleAnalyticsId: toString(item.google_analytics_id ?? item.googleAnalyticsId),
+    googleSiteVerification: toString(
+      item.google_site_verification ?? item.googleSiteVerification,
+    ),
   };
 }
 

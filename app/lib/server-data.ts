@@ -1,3 +1,4 @@
+import { cache } from "react";
 import {
   normalizeCategory,
   normalizeDiscount,
@@ -73,13 +74,13 @@ export async function fetchLandingData(): Promise<LandingData> {
   };
 }
 
-export async function fetchServerSettings(): Promise<Settings> {
+export const fetchServerSettings = cache(async (): Promise<Settings> => {
   const json = (await fetchLaravel("/settings")) as LaravelResource | null;
 
   if (json?.data) return normalizeSettings(json.data);
 
   return mockSettings;
-}
+});
 
 export async function fetchServerProductById(id: number): Promise<Product | null> {
   const json = (await fetchLaravel(`/products/${id}`)) as LaravelResource | null;

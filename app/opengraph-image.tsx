@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { siteDescription, siteName } from "./lib/seo";
+import { fetchServerSettings } from "./lib/server-data";
 
 export const size = {
   width: 1200,
@@ -8,7 +9,28 @@ export const size = {
 
 export const contentType = "image/png";
 
-export default function Image() {
+export default async function Image() {
+  const settings = await fetchServerSettings();
+
+  // Kalau admin sudah mengunggah OG image, sajikan gambar itu (di-proxy lewat
+  // domain ini agar konsisten & pasti bisa diambil crawler). Jika tidak,
+  // pakai gambar branded yang di-generate di bawah.
+  if (settings.ogImageUrl) {
+    try {
+      const upstream = await fetch(settings.ogImageUrl);
+      if (upstream.ok) {
+        return new Response(await upstream.arrayBuffer(), {
+          headers: {
+            "Content-Type": upstream.headers.get("content-type") ?? "image/png",
+            "Cache-Control": "public, max-age=3600",
+          },
+        });
+      }
+    } catch {
+      // jatuh ke gambar generated bila gagal mengambil
+    }
+  }
+
   return new ImageResponse(
     (
       <div

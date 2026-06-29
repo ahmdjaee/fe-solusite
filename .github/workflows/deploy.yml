@@ -11,6 +11,7 @@ jobs:
 
     env:
       NEXT_PUBLIC_LARAVEL_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_LARAVEL_API_BASE_URL }}
+      NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
 
     steps:
       - name: Checkout

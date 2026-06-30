@@ -127,7 +127,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                 {settings.siteName.charAt(0) || "S"}
               </div>
             )}
-            <div>
+            <div className="hidden lg:block">
               <p className="text-sm text-slate-500 dark:text-slate-400">{settings.siteName}</p>
               <p className="text-base font-semibold sm:text-lg">
                 <LocalizedText text={detailCopy.productDetail} />

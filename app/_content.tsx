@@ -73,13 +73,13 @@ function ProductCard({
                 {product.label}
               </span>
             )}
-            {showDiscount && (
+            {/* {showDiscount && (
               <span className="rounded-full bg-rose-500/95 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
                 {pricing.discount?.type === "percentage"
                   ? `${pricing.discount.value}% OFF`
                   : `${formatPrice(pricing.savings)} OFF`}
               </span>
-            )}
+            )} */}
           </div>
         </div>
       </Link>
